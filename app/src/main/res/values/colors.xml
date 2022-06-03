@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#00796B</color>
+    <color name="colorPrimaryDark">#00796B</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="textColor">#000000</color>
+
+    <color name="purple_200">#6C02EF</color>
+    <color name="purple_500">#299FFA</color> <!-- button -->
+    <color name="purple_600">#C6C6C6</color> <!-- layout background -->
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color> <!-- oclock's text -->
+    <color name="white">#FFFFFFFF</color> <!-- button's text -->
+</resources>
