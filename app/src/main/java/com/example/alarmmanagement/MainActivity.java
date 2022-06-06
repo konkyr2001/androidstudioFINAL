@@ -1,5 +1,6 @@
 package com.example.alarmmanagement;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SwitchCompat;
@@ -8,20 +9,15 @@ import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.AlarmClock;
-import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,10 +26,13 @@ import com.example.alarmmanagement.databinding.ActivityMainBinding;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class MainActivity extends AppCompatActivity {
     private ArrayList<Integer> alarms;
     private int counterAlarms;
@@ -44,20 +43,37 @@ public class MainActivity extends AppCompatActivity {
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
     private ImageView bin;
+    private Button historyBtn;
+    private String hour1;
+    private String minute1 ;
     private RelativeLayout relative1;
     private RelativeLayout relative2;
     private RelativeLayout relative3;
 
     private SwitchCompat switchCompat;
+    private TextView date,minutes,hours,description;
+    private DBHandler dbHandler;
     private SharedPreferences sharedPreferences = null;
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu/MM/dd");
+    LocalDate localDate = LocalDate.now();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         createNotificationChannel();
+        hour1="";
+        minute1="";
 
+
+        date = findViewById(R.id.idDate);
+        minutes=findViewById(R.id.minutes);
+        hours=findViewById(R.id.hour);
+        description=findViewById(R.id.description);
+        historyBtn=findViewById(R.id.HISTORY);
+        dbHandler = new DBHandler(MainActivity.this);
         // DARK MODE
         switchCompat = findViewById(R.id.switchCompat);
         sharedPreferences = getSharedPreferences("night", 0);
@@ -136,12 +152,74 @@ public class MainActivity extends AppCompatActivity {
         }
         binding.selectedTime1.setText(currentTimer);
 */
+        historyBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this, ViewCourses.class);
+                startActivity(i);
+
+            }
+        });
+
         binding.selectTimeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showTimePicker();
+                picker = new MaterialTimePicker.Builder()
+                        .setTimeFormat(TimeFormat.CLOCK_12H)
+                        .setHour(12)
+                        .setMinute(0)
+                        .setTitleText("Select Alarm Time")
+                        .build();
+
+                picker.show(getSupportFragmentManager(),"foxandroid");
+
+                picker.addOnPositiveButtonClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        if (picker.getHour() > 12){
+                            hour1 = String.format("%02d",(picker.getHour()-12));
+                            minute1 = String.format("%02d",picker.getMinute())+" PM";
+                            /*
+                            selectedTime.setText(
+                                    String.format("%02d",(picker.getHour())-12)+" : "+String.format("%02d",picker.getMinute())+" PM"
+                            );
+
+                             */
+
+                        }else {
+                            hour1 = String.format("%02d",(picker.getHour()));
+                            minute1 = String.format("%02d",picker.getMinute())+" AM";
+                            /*
+                            selectedTime.setText( String.format("%02d",(picker.getHour()))+" : "+String.format("%02d",picker.getMinute())+" AM");
+
+                             */
+
+                        }
+
+
+                        calendar = Calendar.getInstance();
+                        calendar.set(Calendar.HOUR_OF_DAY,picker.getHour());
+                        calendar.set(Calendar.MINUTE,picker.getMinute());
+                        calendar.set(Calendar.SECOND,0);
+                        calendar.set(Calendar.MILLISECOND,0);
+                        if(hour1.equals("") && minute1.equals("") ){
+                            Toast.makeText(MainActivity.this, "Please set the time..", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        dbHandler.addNewAlarm(dtf.format(localDate),minute1,"alarm",hour1);
+                        Toast.makeText(MainActivity.this, "inserted successfully", Toast.LENGTH_SHORT).show();
+
+
+                    }
+                });
+
+
+
             }
+
         });
+
 
 /*
         binding.setAlarmBtn.setOnClickListener(new View.OnClickListener() {
@@ -231,6 +309,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     private void checkAction(View view, int relativeIndex) { // mouse clicked on relative layout
         if (relativeIndex == 1) {
             SwitchCompat switchAlarm = (SwitchCompat) relative1.getChildAt(1);
@@ -297,60 +376,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showTimePicker() {
 
-        picker = new MaterialTimePicker.Builder()
-                .setTimeFormat(TimeFormat.CLOCK_12H)
-                .setHour(12)
-                .setMinute(0)
-                .setTitleText("Select Alarm Time")
-                .build();
-
-        picker.show(getSupportFragmentManager(), "foxandroid");
-
-        picker.addOnPositiveButtonClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int layout = getCorrectRelativeLayout();
-                if (layout == 1) {
-                    String minutes;
-                    if (picker.getMinute() < 10) {
-                        minutes = "0" + picker.getMinute();
-                    } else {
-                        minutes = "" + picker.getMinute();
-                    }
-                    if (picker.getHour() > 12) {
-                        binding.selectedTime1.setText(String.format("%02d", (picker.getHour() - 12)) + " : " + minutes + " PM");
-                    } else {
-                        binding.selectedTime1.setText(picker.getHour() + " : " + minutes + " AM");
-                    }
-                    calendar = Calendar.getInstance();
-                    calendar.set(Calendar.HOUR_OF_DAY, picker.getHour());
-                    calendar.set(Calendar.MINUTE, picker.getMinute());
-                    calendar.set(Calendar.SECOND, 0);
-                    calendar.set(Calendar.MILLISECOND, 0);
-                } else if (layout == 2) {
-
-                } else if (layout == 3) {
-
-                }
-
-
-/*
-                String minutes;
-                if (calendar.get(Calendar.MINUTE) < 10) {
-                    minutes = "0" + calendar.get(Calendar.MINUTE);
-                } else {
-                    minutes = "" + calendar.get(Calendar.MINUTE);
-                }
-                if (calendar.get(Calendar.HOUR_OF_DAY) < 12) {
-                    normalTimer = calendar.get(Calendar.HOUR_OF_DAY) + " : " + minutes + "AM";
-                } else {
-                    normalTimer = calendar.get(Calendar.HOUR_OF_DAY)-12 + " : " + minutes + "PM";
-                }*/
-            }
-        });
-    }
 
     private int getCorrectRelativeLayout() {
         if (relative1.getVisibility() == View.GONE) {
@@ -386,5 +412,6 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+
 
 }

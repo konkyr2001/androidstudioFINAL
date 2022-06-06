@@ -28,12 +28,20 @@
         android:gravity="center"
         android:orientation="vertical">
 
+
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
+            <Button
+                android:id="@+id/HISTORY"
+                android:layout_width="match_parent"
+                android:layout_height="69dp"
+                android:layout_marginHorizontal="26dp"
+                android:text="HISTORY"
+                android:textSize="26dp" />
 
             <RelativeLayout
                 android:id="@+id/relative1"
@@ -44,7 +52,7 @@
                 android:layout_weight="1"
                 android:background="#C6C6C6"
                 android:gravity="center|top"
-                android:visibility="gone"
+
                 android:orientation="vertical">
 
                 <TextView
@@ -101,6 +109,7 @@
                     android:text="08 : 45 PM"
                     android:textColor="@color/black"
                     android:textSize="46dp" />
+
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/switchAlarm2"
@@ -182,6 +191,8 @@
             android:layout_marginHorizontal="26dp"
             android:text="Select Time"
             android:textSize="26dp" />
+
+
     </LinearLayout>
 
     <!--
